@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <PropertyGroup>
+    <RootNamespace>Clinic.QueueWorker</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Clinic.Infrastructure\Clinic.Infrastructure.csproj" />
+    <ProjectReference Include="..\Clinic.Contracts\Clinic.Contracts.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+  </ItemGroup>
+</Project>

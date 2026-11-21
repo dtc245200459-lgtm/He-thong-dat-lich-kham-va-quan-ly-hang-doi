@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="src/Clinic.Contracts/Clinic.Contracts.csproj" />
+  <Project Path="src/Clinic.Domain/Clinic.Domain.csproj" />
+  <Project Path="src/Clinic.Infrastructure/Clinic.Infrastructure.csproj" />
+  <Project Path="src/Clinic.AppointmentApi/Clinic.AppointmentApi.csproj" />
+  <Project Path="src/Clinic.QueueWorker/Clinic.QueueWorker.csproj" />
+  <Project Path="src/Clinic.NotificationService/Clinic.NotificationService.csproj" />
+  <Project Path="src/Clinic.ConsoleClient/Clinic.ConsoleClient.csproj" />
+</Solution>

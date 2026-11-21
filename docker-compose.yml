@@ -1,0 +1,114 @@
+name: clinic-queue
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-clinic}
+      POSTGRES_USER: ${POSTGRES_USER:-clinic}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clinic_dev_password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [clinic-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-clinic}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-clinic_dev_password}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks: [clinic-net]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  appointment-api:
+    build:
+      context: .
+      dockerfile: src/Clinic.AppointmentApi/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Clinic: Host=postgres;Port=5432;Database=${POSTGRES_DB:-clinic};Username=${POSTGRES_USER:-clinic};Password=${POSTGRES_PASSWORD:-clinic_dev_password}
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-clinic}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-clinic_dev_password}
+      Logging__LogLevel__Default: Information
+      Logging__LogLevel__Microsoft_AspNetCore: Warning
+    ports: ["8080:8080"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [clinic-net]
+    restart: unless-stopped
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: src/Clinic.QueueWorker/Dockerfile
+    environment:
+      ConnectionStrings__Clinic: Host=postgres;Port=5432;Database=${POSTGRES_DB:-clinic};Username=${POSTGRES_USER:-clinic};Password=${POSTGRES_PASSWORD:-clinic_dev_password}
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-clinic}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-clinic_dev_password}
+      Logging__LogLevel__Default: Information
+      Logging__LogLevel__Microsoft_AspNetCore: Warning
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [clinic-net]
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: src/Clinic.NotificationService/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8081
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-clinic}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-clinic_dev_password}
+      Logging__LogLevel__Default: Information
+      Logging__LogLevel__Microsoft_AspNetCore: Warning
+    ports: ["8081:8081"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [clinic-net]
+    restart: unless-stopped
+
+  console-client:
+    build:
+      context: .
+      dockerfile: src/Clinic.ConsoleClient/Dockerfile
+    environment:
+      Client__ApiBaseUrl: http://appointment-api:8080
+    depends_on: [appointment-api]
+    networks: [clinic-net]
+    profiles: [demo-client]
+
+networks:
+  clinic-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  rabbitmq-data:

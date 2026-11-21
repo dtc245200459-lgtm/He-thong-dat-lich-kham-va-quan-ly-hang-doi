@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Clinic.AppointmentApi</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Clinic.Infrastructure\Clinic.Infrastructure.csproj" />
+    <ProjectReference Include="..\Clinic.Contracts\Clinic.Contracts.csproj" />
+  </ItemGroup>
+</Project>
