@@ -12,6 +12,7 @@ public sealed class ClinicDbContext(DbContextOptions<ClinicDbContext> options) :
     public DbSet<QueueEntry> QueueEntries => Set<QueueEntry>();
     public DbSet<QueueState> QueueStates => Set<QueueState>();
     public DbSet<QueueCounter> QueueCounters => Set<QueueCounter>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,5 +65,12 @@ public sealed class ClinicDbContext(DbContextOptions<ClinicDbContext> options) :
 
         modelBuilder.Entity<QueueState>().HasKey(x => new { x.DoctorId, x.ServiceDate });
         modelBuilder.Entity<QueueCounter>().HasKey(x => new { x.DoctorId, x.ServiceDate });
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.RoutingKey).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Payload).IsRequired();
+            entity.HasIndex(x => new { x.PublishedAt, x.LockedUntil, x.CreatedAt });
+        });
     }
 }

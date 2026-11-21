@@ -10,7 +10,12 @@ public static class InfrastructureRegistration
     {
         var connectionString = configuration.GetConnectionString("Clinic")
             ?? throw new InvalidOperationException("ConnectionStrings:Clinic is required.");
-        services.AddDbContext<ClinicDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<ClinicDbContext>(options =>
+            options.UseNpgsql(connectionString, postgres => postgres.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null)));
+        services.AddSingleton<RabbitMqPublisher>();
         return services;
     }
 }

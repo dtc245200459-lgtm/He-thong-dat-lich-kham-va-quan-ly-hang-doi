@@ -60,6 +60,7 @@ public sealed class QueueEntry
     public Guid DoctorId { get; set; }
     public DateOnly ServiceDate { get; set; }
     public int Number { get; set; }
+    public bool IsCancelled { get; set; }
     public Appointment? Appointment { get; set; }
 }
 
@@ -75,4 +76,16 @@ public sealed class QueueCounter
     public Guid DoctorId { get; set; }
     public DateOnly ServiceDate { get; set; }
     public int LastIssuedNumber { get; set; }
+}
+
+public sealed class OutboxMessage
+{
+    public Guid Id { get; set; }
+    public required string RoutingKey { get; set; }
+    public required string Payload { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? PublishedAt { get; set; }
+    public DateTimeOffset? LockedUntil { get; set; }
+    public Guid? LockToken { get; set; }
+    public int Attempts { get; set; }
 }
