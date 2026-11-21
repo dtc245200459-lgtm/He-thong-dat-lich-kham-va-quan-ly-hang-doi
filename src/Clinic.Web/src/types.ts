@@ -62,6 +62,32 @@ export interface RoomState {
   currentTicket: string;
 }
 
+export interface Department {
+  id: string;
+  name: string;
+  description: string;
+  waitTimeMinutes: number;
+  fee: number;
+}
+
+export interface TimeSlot {
+  id: string;
+  doctorId: string;
+  startTime: string;
+  endTime: string;
+  availableCount: number;
+}
+
+export interface QueueTicket {
+  code: string;
+  appointmentId: string;
+  room: string;
+  floor: string;
+  currentServing: string;
+  peopleAhead: number;
+  estimatedWaitMinutes: number;
+}
+
 export interface QueueTicketResponse {
   ticketCode: string;
   queueNumber: number;
