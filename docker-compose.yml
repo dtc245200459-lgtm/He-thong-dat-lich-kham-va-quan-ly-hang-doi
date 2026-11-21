@@ -102,11 +102,20 @@ services:
     environment:
       Client__ApiBaseUrl: http://appointment-api:8080
       Client__NotificationHubUrl: http://notification-service:8081/hubs/queue
-    depends_on: [appointment-api]
+    depends_on: [appointment-api, notification-service]
     networks: [clinic-net]
     profiles: [demo-client]
     stdin_open: true
     tty: true
+
+  web:
+    build:
+      context: ./src/Clinic.Web
+      dockerfile: Dockerfile
+    ports: ["3000:80"]
+    depends_on: [appointment-api, notification-service]
+    networks: [clinic-net]
+    restart: unless-stopped
 
 networks:
   clinic-net:

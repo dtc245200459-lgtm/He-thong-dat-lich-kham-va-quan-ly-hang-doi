@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12372a">
+  <title>Clinic Queue</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#" aria-label="Clinic Queue home">
+      <span class="brand-mark">CQ</span>
+      <span>Clinic Queue</span>
+    </a>
+    <nav class="nav" aria-label="Điều hướng chính">
+      <button class="nav-item active" data-view="dashboard"><span class="nav-dot"></span>Tổng quan</button>
+      <button class="nav-item" data-view="booking"><span class="nav-dot"></span>Đặt lịch</button>
+      <button class="nav-item" data-view="appointments"><span class="nav-dot"></span>Lịch hẹn</button>
+      <button class="nav-item" data-view="queue"><span class="nav-dot"></span>Quầy phục vụ</button>
+    </nav>
+    <div class="sidebar-status"><span class="status-pulse"></span><div><strong>Hệ thống hoạt động</strong><small id="sync-time">Đang đồng bộ...</small></div></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-button" id="menu-button" aria-label="Mở menu">Menu</button>
+      <div><p class="eyebrow" id="today-label"></p><h1 id="page-title">Tổng quan</h1></div>
+      <button class="primary-button top-action" data-view="booking">+ Đặt lịch khám</button>
+    </header>
+
+    <section class="view active" id="dashboard-view">
+      <div class="metrics">
+        <article><p>Bác sĩ đang làm việc</p><strong id="metric-doctors">--</strong><span>Phòng khám mở</span></article>
+        <article><p>Lượt đã phát</p><strong id="metric-issued">--</strong><span>Trong ngày</span></article>
+        <article><p>Đang phục vụ</p><strong id="metric-current">--</strong><span id="metric-current-detail">Chưa có dữ liệu</span></article>
+        <article><p>Khách còn chờ</p><strong id="metric-waiting">--</strong><span>Trên hệ thống</span></article>
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="panel doctor-panel">
+          <div class="panel-header"><div><p class="eyebrow">Phòng khám</p><h2>Bác sĩ trong ca</h2></div><button class="text-button" data-view="booking">Xem lịch trống</button></div>
+          <div class="doctor-grid" id="doctor-grid"><div class="loading">Đang tải danh sách bác sĩ...</div></div>
+        </section>
+
+        <section class="panel queue-preview">
+          <div class="panel-header"><div><p class="eyebrow">Thời gian thực</p><h2>Hàng đợi hôm nay</h2></div><span class="live-badge"><span></span>Live</span></div>
+          <div id="queue-preview"><div class="loading">Chọn một bác sĩ để xem hàng đợi.</div></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="booking-view">
+      <div class="booking-layout">
+        <section class="panel booking-form-panel">
+          <div class="panel-header"><div><p class="eyebrow">Đăng ký mới</p><h2>Thông tin lịch khám</h2></div></div>
+          <form id="booking-form">
+            <label>Họ và tên bệnh nhân<input name="patientName" required maxlength="160" placeholder="Nguyễn Văn An" autocomplete="name"></label>
+            <label>Số điện thoại<input name="patientPhone" required maxlength="40" placeholder="0908887766" autocomplete="tel"></label>
+            <label>Bác sĩ<select name="doctorId" id="booking-doctor" required><option value="">Chọn bác sĩ</option></select></label>
+            <label>Khung giờ<select name="timeSlotId" id="booking-slot" required disabled><option value="">Chọn bác sĩ trước</option></select></label>
+            <button class="primary-button full-button" type="submit">Xác nhận đặt lịch</button>
+          </form>
+        </section>
+        <aside class="booking-summary">
+          <p class="eyebrow">Tóm tắt</p>
+          <h2>Phiếu khám</h2>
+          <div class="summary-line"><span>Bác sĩ</span><strong id="summary-doctor">Chưa chọn</strong></div>
+          <div class="summary-line"><span>Giờ khám</span><strong id="summary-slot">Chưa chọn</strong></div>
+          <div class="summary-line"><span>Phòng</span><strong id="summary-room">--</strong></div>
+          <div class="summary-note">Sau đặt lịch, hệ thống sẽ cấp số thứ tự tự động qua hàng đợi.</div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" id="appointments-view">
+      <section class="panel appointments-panel">
+        <div class="panel-header"><div><p class="eyebrow">Tra cứu</p><h2>Lịch hẹn của bạn</h2></div></div>
+        <form class="lookup-form" id="lookup-form"><input id="appointment-id" aria-label="Mã lịch hẹn" placeholder="Nhập mã lịch hẹn (UUID)"><button class="secondary-button" type="submit">Tra cứu</button></form>
+        <div id="appointment-result"><div class="empty-state"><strong>Chưa có lịch hẹn</strong><span>Nhập mã lịch hẹn sau khi đặt để xem trạng thái.</span></div></div>
+      </section>
+    </section>
+
+    <section class="view" id="queue-view">
+      <section class="panel staff-panel">
+        <div class="queue-toolbar">
+          <div><p class="eyebrow">Quầy phục vụ</p><h2>Điều phối lượt khám</h2></div>
+          <div class="toolbar-controls"><select id="staff-doctor" aria-label="Chọn bác sĩ"></select><input id="staff-date" type="date" aria-label="Ngày khám"></div>
+        </div>
+        <div class="serving-banner" id="serving-banner"><span>Đang phục vụ</span><strong>--</strong><small>Chưa có dữ liệu</small></div>
+        <div class="queue-table-wrap"><table><thead><tr><th>Số thứ tự</th><th>Bệnh nhân</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="queue-table-body"></tbody></table></div>
+        <button class="primary-button full-button" id="serve-next">Gọi lượt tiếp theo</button>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
