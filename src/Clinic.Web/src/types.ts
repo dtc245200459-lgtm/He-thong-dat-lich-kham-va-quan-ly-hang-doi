@@ -37,6 +37,31 @@ export interface AppointmentResponse {
   status: string;
 }
 
+export type QueueStatus = 'waiting' | 'priority' | 'in-consultation' | 'completed' | 'no-show' | 'checkedin';
+
+export interface QueueItem {
+  id: string;
+  ticket: string;
+  name: string;
+  age: number;
+  gender: string;
+  phone: string;
+  type: 'Đã hẹn trước' | 'Walk-in' | 'Ưu tiên';
+  appointmentTime: string;
+  waitedMinutes: number;
+  status: QueueStatus;
+  priority: boolean;
+  symptoms: string;
+  bookingTime: string;
+}
+
+export interface RoomState {
+  id: string;
+  name: string;
+  doctor: string;
+  currentTicket: string;
+}
+
 export interface QueueTicketResponse {
   ticketCode: string;
   queueNumber: number;
