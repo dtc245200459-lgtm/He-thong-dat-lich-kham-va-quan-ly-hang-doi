@@ -4,7 +4,7 @@ import {
   Stethoscope, UserRound, UsersRound, Baby, Ear, SmilePlus,
   Microscope, ShieldCheck, HeartPulse, CircleDot
 } from 'lucide-react';
-import Dashboard from './Dashboard';
+import OpsDesk from './OpsDesk';
 import type { AppointmentRequest, AppointmentResponse, Department, Doctor, DoctorSlot, QueueTicket, TimeSlot } from './types';
 
 const departments: Department[] = [
@@ -102,7 +102,7 @@ export default function ClinicApp() {
     }
   }
 
-  if (view === 'staff') return <Dashboard />;
+  if (view === 'staff') return <OpsDesk />;
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] text-[#1C1917]">
