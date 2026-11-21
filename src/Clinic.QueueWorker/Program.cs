@@ -4,5 +4,7 @@ using Clinic.QueueWorker;
 var builder = Host.CreateApplicationBuilder(args);
 builder.Logging.AddJsonConsole();
 builder.Services.AddClinicDatabase(builder.Configuration);
+builder.Services.AddScoped<IQueueTicketProcessor, QueueTicketProcessor>();
+builder.Services.AddHostedService<OutboxDispatcher>();
 builder.Services.AddHostedService<QueueWorker>();
 await builder.Build().RunAsync();

@@ -1,6 +1,6 @@
 # Clinic Appointment and Queue
 
-Hệ thống đặt lịch khám và quản lý hàng đợi dùng .NET 10 Minimal API, EF Core/PostgreSQL, RabbitMQ và SignalR. Phần 2 triển khai tầng dữ liệu, seed data, endpoint đặt/hủy/tra cứu và transactional outbox cho yêu cầu cấp số. Queue Worker vẫn là skeleton; phần đó sẽ consume `ticket.requested` và cấp `QueueNumber`.
+Hệ thống đặt lịch khám và quản lý hàng đợi dùng .NET 10 Minimal API, EF Core/PostgreSQL, RabbitMQ và SignalR. Appointment API ghi lịch hẹn cùng transactional outbox; Queue Worker consume `ticket.requested`, cấp số thứ tự và ghi queue update event.
 
 ## Kiến trúc
 
@@ -17,7 +17,7 @@ flowchart LR
     Notify -->|SignalR group by doctorId| Client
 ```
 
-`Clinic.Domain` sở hữu entity và trạng thái; `Clinic.Contracts` định nghĩa message dùng chung; `Clinic.Infrastructure` chứa DbContext, PostgreSQL retry strategy, RabbitMQ publisher và outbox dispatcher. API ghi lịch hẹn cùng `ticket.requested` vào PostgreSQL trong một transaction. Dispatcher publish message persistent với publisher confirm; nếu broker gián đoạn, outbox giữ message và retry theo exponential backoff. Delivery là at-least-once, vì vậy consumer cấp số cần idempotent theo `AppointmentId`.
+`Clinic.Domain` sở hữu entity và trạng thái; `Clinic.Contracts` định nghĩa message dùng chung; `Clinic.Infrastructure` chứa DbContext, PostgreSQL retry strategy, RabbitMQ publisher và outbox dispatcher. API ghi lịch hẹn cùng `ticket.requested` vào PostgreSQL trong một transaction. Dispatcher publish message persistent với publisher confirm; nếu broker gián đoạn, outbox giữ message và retry theo exponential backoff. Worker consume manual-ack; DB commit xong mới ack. Delivery là at-least-once, Worker khóa appointment khi xử lý và bỏ qua message trùng theo trạng thái/`QueueNumber`.
 
 ## Cây thư mục
 
@@ -47,7 +47,9 @@ erDiagram
     DOCTOR ||--o{ QUEUE_COUNTER : numbers
 ```
 
-`QueueState` và `QueueCounter` có khóa ghép `(DoctorId, ServiceDate)`. Unique index trên `(DoctorId, ServiceDate, QueueNumber)` và `(DoctorId, ServiceDate, Number)` là lớp bảo vệ cuối cho số thứ tự; unique index slot `(DoctorId, StartTime)` tránh tạo trùng khung giờ. `TimeSlot` có check constraint `0 <= BookedCount <= Capacity`. Khi triển khai booking, tăng `BookedCount` cần dùng conditional atomic update trong transaction để chặn overbooking.
+`QueueState` và `QueueCounter` có khóa ghép `(DoctorId, ServiceDate)`. Worker dùng PostgreSQL atomic upsert trên `QueueCounter` để lấy số kế tiếp, được bảo vệ thêm bởi unique index `(DoctorId, ServiceDate, QueueNumber)` và `(DoctorId, ServiceDate, Number)`. `TimeSlot` có check constraint cho capacity; booking dùng conditional atomic update trong transaction để chặn overbooking.
+
+Worker khai báo durable queue `clinic.ticket-requests`, retry queues có TTL tăng dần tới 60 giây và dead-letter queue `clinic.ticket-dead-letters`. Lỗi DB được retry qua retry exchange; payload sai hoặc trạng thái không hợp lệ được chuyển vào DLQ để kiểm tra thủ công. Sự kiện `queue.updated` được ghi vào outbox trong cùng transaction cấp số; dispatcher có thể chạy ở API hoặc Worker và dùng lease để tránh cùng claim một message.
 
 ## Appointment API
 
@@ -88,7 +90,7 @@ Chạy client mẫu một lần: `docker compose --profile demo-client run --rm 
 
 Compose inject cấu hình bằng biến môi trường theo quy tắc ASP.NET Core: `ConnectionStrings__Clinic`, `RabbitMq__HostName`, `RabbitMq__UserName`, `RabbitMq__Password`, `Logging__LogLevel__Default`. Trong container, dùng service name `postgres` và `rabbitmq`, không dùng `localhost`. `.env` chỉ dành cho local development; môi trường thật nên lấy secrets từ secret store/orchestrator.
 
-Các host phát console JSON logs, phù hợp để Docker thu thập và lọc. Giữ log mức `Information` cho luồng nghiệp vụ, `Warning` cho retry/dependency chậm và thêm correlation/appointment ID khi triển khai consumer để lần theo một request xuyên API → broker → Worker → notification. Không ghi số điện thoại hoặc dữ liệu định danh bệnh nhân vào log.
+Các host phát console JSON logs, phù hợp để Docker thu thập và lọc. Worker ghi `AppointmentId`, `DoctorId`, số thứ tự, kết quả xử lý, retry delay và lỗi kết nối; có thể theo dõi bằng `docker compose logs -f queue-worker`. Kiểm tra poison messages trong queue `clinic.ticket-dead-letters` từ RabbitMQ management UI. Không ghi số điện thoại hoặc dữ liệu định danh bệnh nhân vào log.
 
 ## Build local
 
@@ -97,6 +99,6 @@ dotnet build ClinicQueue.slnx
 dotnet run --project src/Clinic.AppointmentApi
 ```
 
-Các project hiện build được; database phải chạy và `ConnectionStrings__Clinic` phải được cấu hình khi khởi chạy API. API thực hiện booking/hủy/tra cứu và dispatch outbox; Queue Worker chưa consume ticket request để cấp số tự động. OpenAPI có tại `/openapi/v1.json`.
+Các project hiện build được; database và RabbitMQ phải sẵn sàng, hoặc cần cấu hình connection string khi chạy API/Worker riêng. API thực hiện booking/hủy/tra cứu; Worker tiêu thụ ticket request và cấp số tự động. OpenAPI có tại `/openapi/v1.json`.
 
-Đây là phần hoàn thiện tầng dữ liệu và Appointment API; Queue Worker và Notification Service vẫn cần phần triển khai riêng để hoàn tất end-to-end.
+Notification Service hiện vẫn cần consumer RabbitMQ để broadcast `queue.updated` qua SignalR, là phần còn lại để hoàn tất luồng realtime end-to-end.
