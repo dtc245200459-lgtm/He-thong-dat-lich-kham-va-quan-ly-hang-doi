@@ -3,6 +3,7 @@
     <RootNamespace>Clinic.Infrastructure</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Clinic.Contracts\Clinic.Contracts.csproj" />
     <ProjectReference Include="..\Clinic.Domain\Clinic.Domain.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />

@@ -3,4 +3,8 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Clinic.ConsoleClient</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Clinic.Contracts\Clinic.Contracts.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.15" />
+  </ItemGroup>
 </Project>

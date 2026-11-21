@@ -1,4 +1,5 @@
 using System.Text;
+using Clinic.Contracts;
 using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
 
@@ -6,7 +7,7 @@ namespace Clinic.Infrastructure;
 
 public sealed class RabbitMqPublisher(IConfiguration configuration)
 {
-    public const string ExchangeName = "clinic.events";
+    public const string ExchangeName = QueueEventNames.ExchangeName;
 
     private readonly ConnectionFactory _factory = new()
     {

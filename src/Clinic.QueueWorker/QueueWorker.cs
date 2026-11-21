@@ -15,7 +15,7 @@ public sealed class QueueWorker(
     IConfiguration configuration,
     ILogger<QueueWorker> logger) : BackgroundService
 {
-    private const string QueueName = "clinic.ticket-requests";
+    private const string QueueName = QueueEventNames.TicketRequestsQueue;
     private const string RetryExchange = "clinic.ticket-retries";
     private const string DeadLetterExchange = "clinic.dead-letter";
     private const string DeadLetterQueue = "clinic.ticket-dead-letters";

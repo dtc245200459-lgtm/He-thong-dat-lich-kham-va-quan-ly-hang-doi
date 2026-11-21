@@ -101,9 +101,12 @@ services:
       dockerfile: src/Clinic.ConsoleClient/Dockerfile
     environment:
       Client__ApiBaseUrl: http://appointment-api:8080
+      Client__NotificationHubUrl: http://notification-service:8081/hubs/queue
     depends_on: [appointment-api]
     networks: [clinic-net]
     profiles: [demo-client]
+    stdin_open: true
+    tty: true
 
 networks:
   clinic-net:
